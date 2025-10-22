@@ -1,0 +1,52 @@
+# Tên của Workflow, sẽ hiển thị trên tab Actions của GitHub
+name: Compile Java Backend
+
+# Kích hoạt Workflow khi nào:
+on:
+  # Khi có code được push lên nhánh 'main'
+  push:
+    branches: [ main ]
+  # Khi có Pull Request (PR) được mở hoặc cập nhật nhắm vào nhánh 'main'
+  pull_request:
+    branches: [ main ]
+  # Cho phép chạy workflow thủ công từ giao diện GitHub
+  workflow_dispatch:
+
+# Các công việc (jobs) sẽ được thực hiện
+jobs:
+  build:
+    # Công việc này sẽ chạy trên môi trường Ubuntu mới nhất
+    runs-on: ubuntu-latest
+    
+    # Các bước thực hiện công việc 'build'
+    steps:
+      # Bước 1: Checkout code (lấy mã nguồn về máy ảo)
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Bước 2: Cài đặt môi trường Java Development Kit (JDK)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17' # Đảm bảo dùng JDK 17 cho Spring Boot mới
+          distribution: 'temurin' # Một bản phân phối JDK phổ biến
+          # Bật cache cho Maven, giúp tăng tốc độ build các lần sau
+          cache: maven 
+          
+      # Bước 3: Thực hiện Build (Biên dịch/Compile)
+      # Đây là bước quan trọng nhất, dùng Maven để tạo file .jar/.war
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
+        # Lệnh: 
+        # - mvn: chạy Maven
+        # - -B: chế độ batch (không tương tác)
+        # - package: lệnh Maven để compile code, chạy test, và đóng gói thành JAR/WAR
+        # - --file pom.xml: chỉ định file project
+
+      # (Tùy chọn) Bước 4: Lưu artifact (nếu cần)
+      # Bạn có thể thêm bước này nếu muốn lưu lại file .jar đã build
+      #- name: Upload artifact
+      #  uses: actions/upload-artifact@v4
+      #  with:
+      #    name: java-app-jar
+      #    path: target/*.jar
